@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "files": ["public/**/*", "src/**/*", "package.json", "server.js"],
   "builds": [
     {
       "src": "index.js",
