@@ -1,9 +1,8 @@
 {
   "version": 2,
-  "files": ["public/**/*", "src/**/*", "package.json", "server.js"],
   "builds": [
     {
-      "src": "index.js",
+      "src": "server.js",
       "use": "@vercel/node"
     }
   ],
@@ -12,5 +11,6 @@
       "src": "/(.*)",
       "dest": "/"
     }
-  ]
+  ],
+  "files": ["public/**/*", "src/**/*", "package.json", "server.js"]
 }
