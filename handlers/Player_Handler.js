@@ -151,22 +151,12 @@ module.exports = async (client) => {
       let data = await client.music.get(queue.textChannel.guild.id);
       if (queue.textChannel.id === data.channel) return;
       let ID = client.temp2.get(queue.textChannel.guild.id);
-      let playembed;
-      try {
-        playembed = await queue.textChannel.messages.fetch(ID, {
-          cache: true,
-          force: true,
-        });
-      } catch (error) {
-        console.error("Error fetching playembed:", error);
-        return;
-      }
-      if (playembed && typeof playembed.edit === "function") {
-        playembed.edit({ components: [client.buttons2] }).catch((e) => {
-          console.error("Error editing playembed:", e);
-        });
-      } else {
-        console.error("playembed or edit method not found.");
+      let playembed = await queue.textChannel.messages.fetch(ID, {
+        cache: true,
+        force: true,
+      });
+      if (playembed) {
+        playembed.edit({ components: [client.buttons2] }).catch((e) => {});
       }
       queue.textChannel.send({
         embeds: [
@@ -209,7 +199,7 @@ module.exports = async (client) => {
         .catch((e) => {});
     });
     // error
-    player    .on("error", async (channel, error) => {
+    player.on("error", async (channel, error) => {
       let channel1 = client.music.get(channel.guild.id, "channel");
       if (channel.id === channel1) return;
       let ID = client.temp2.get(channel.guild.id);
@@ -415,7 +405,7 @@ module.exports = async (client) => {
                   .setStyle("SECONDARY")
                   .setLabel("Resume")
                   .setEmoji(emoji.resume);
-                               let ID =
+                let ID =
                   client.temp.get(queue.textChannel.guild.id) ||
                   client.temp2.get(queue.textChannel.guild.id);
                 let playembed = await queue.textChannel.messages
@@ -424,11 +414,11 @@ module.exports = async (client) => {
                     force: true,
                   })
                   .catch((e) => {});
-
-                playembed
-                  .edit({ components: [client.buttons] })
-                  .catch((e) => {});
-
+                if (playembed) {
+                  playembed
+                    .edit({ components: [client.buttons] })
+                    .catch((e) => {});
+                }
                 send(interaction, `** ${emoji.pause} Song Paused !! **`);
               }
             }
@@ -450,99 +440,140 @@ module.exports = async (client) => {
                 );
               } else if (!queue) {
                 send(interaction, `** 🎧 Nothing Playing **`);
-              } else if (queue.loopMode === 1) {
-                await queue.setLoopMode(0);
-                send(interaction, `** ${emoji.single}  Queue Looping is off**`);
-              } else if (queue.loopMode === 0) {
-                await queue.setLoopMode(1);
-                send(interaction, `** ${emoji.loop}  Queue Looping is on**`);
+              } else if (queue.repeatMode === 0) {
+                await queue.setRepeatMode(1);
+                client.buttons.components[3] = new MessageButton()
+                  .setStyle("SECONDARY")
+                  .setCustomId("loop")
+                  .setLabel("Queue")
+                  .setEmoji("🔁");
+                  let ID =
+                  client.temp.get(queue.textChannel.guild.id) ||
+                  client.temp2.get(queue.textChannel.guild.id);
+                let playembed = await queue.textChannel.messages
+                  .fetch(ID, {
+                    cache: true,
+                    force: true,
+                  })
+                  .catch((e) => {});
+                if (playembed) {
+                  playembed
+                    .edit({ components: [client.buttons] })
+                    .catch((e) => {});
+                }
+                send(interaction, `** ${emoji.SUCCESS} Song Loop On !! **`);
+              } else if (queue.repeatMode === 1) {
+                await queue.setRepeatMode(2);
+                client.buttons.components[3] = new MessageButton()
+                  .setStyle("SECONDARY")
+                  .setCustomId("loop")
+                  .setLabel("Off")
+                  .setEmoji(emoji.repeat_mode);
+                  let ID =
+                  client.temp.get(queue.textChannel.guild.id) ||
+                  client.temp2.get(queue.textChannel.guild.id);
+                let playembed = await queue.textChannel.messages
+                  .fetch(ID, {
+                    cache: true,
+                    force: true,
+                  })
+                  .catch((e) => {});
+                if (playembed) {
+                  playembed
+                    .edit({ components: [client.buttons] })
+                    .catch((e) => {});
+                }
+                send(interaction, `** ${emoji.SUCCESS} Queue Loop On !! **`);
+              } else if (queue.repeatMode === 2) {
+                await queue.setRepeatMode(0);
+                client.buttons.components[3] = new MessageButton()
+                  .setStyle("SECONDARY")
+                  .setCustomId("loop")
+                  .setLabel("Song")
+                  .setEmoji("🔂");
+                  let ID =
+                  client.temp.get(queue.textChannel.guild.id) ||
+                  client.temp2.get(queue.textChannel.guild.id);
+                let playembed = await queue.textChannel.messages
+                  .fetch(ID, {
+                    cache: true,
+                    force: true,
+                  })
+                  .catch((e) => {});
+                if (playembed) {
+                  playembed
+                    .edit({ components: [client.buttons] })
+                    .catch((e) => {});
+                }
+                send(interaction, `** ${emoji.SUCCESS} Loop Off !! **`);
               }
             }
             break;
-          case "autoreplay":
-            {
-              if (!channel) {
-                send(
-                  interaction,
-                  `** ${emoji.ERROR} You Need to Join Voice Channel**`
-                );
-              } else if (
-                interaction.guild.me.voice.channel &&
-                !interaction.guild.me.voice.channel.equals(channel)
-              ) {
-                send(
-                  interaction,
-                  `** ${emoji.ERROR} You Need to Join __My__ Voice Channel **`
-                );
-              } else if (!queue) {
-                send(interaction, `** 🎧 Nothing Playing **`);
-              } else if (queue.autoplay) {
-                await queue.setAutoplay(false);
-                send(
-                  interaction,
-                  `** ${emoji.autoreplay}  Autoplay is off**`
-                );
-              } else if (!queue.autoplay) {
-                await queue.setAutoplay(true);
-                send(interaction, `** ${emoji.autoreplay}  Autoplay is on**`);
-              }
-            }
-            break;
-          case "shuffle":
-            {
-              if (!channel) {
-                send(
-                  interaction,
-                  `** ${emoji.ERROR} You Need to Join Voice Channel**`
-                );
-              } else if (
-                interaction.guild.me.voice.channel &&
-                !interaction.guild.me.voice.channel.equals(channel)
-              ) {
-                send(
-                  interaction,
-                  `** ${emoji.ERROR} You Need to Join __My__ Voice Channel **`
-                );
-              } else if (!queue) {
-                send(interaction, `** 🎧 Nothing Playing **`);
-              } else {
-                await queue.shuffle().catch((e) => {});
-                send(interaction, `** ${emoji.shuffle} Queue shuffled**`);
-              }
-            }
-            break;
-          case "remove":
-            {
-              if (!channel) {
-                send(
-                  interaction,
-                  `** ${emoji.ERROR} You Need to Join Voice Channel**`
-                );
-              } else if (
-                interaction.guild.me.voice.channel &&
-                !interaction.guild.me.voice.channel.equals(channel)
-              ) {
-                send(
-                  interaction,
-                  `** ${emoji.ERROR} You Need to Join __My__ Voice Channel **`
-                );
-              } else if (!queue) {
-                send(interaction, `** 🎧 Nothing Playing **`);
-              } else {
-                let song = queue.songs[0];
-                let remove = await queue.remove(0);
-                if (remove)
-                  send(
-                    interaction,
-                    `** ${emoji.remove_queue} Removed \`${song.name}\` from Queue**`
-                  );
-              }
-            }
+          default:
             break;
         }
       }
     });
   } catch (e) {
-    console.log(String(e.stack).red);
+    console.log(chalk.red(e));
   }
+
+  client.on("messageCreate", async (message) => {
+    if (!message.guild || !message.guild.available) return;
+    let data = await client.music.get(message.guildId);
+    if (data.enable === false) return;
+    let channel = await message.guild.channels.cache.get(data.channel);
+    if (!channel) return;
+    if (message.channel.id === channel.id) {
+      if (message.author.bot) {
+        setTimeout(() => {
+          message.delete().catch((e) => {});
+        }, 3000);
+      } else {
+        let voiceChannel = await message.member.voice.channel;
+        if (!voiceChannel) {
+          return send(message, `You need to Join Voice Channel`);
+        } else if (
+          message.guild.me.voice.channel &&
+          !message.guild.me.voice.channel.equals(voiceChannel)
+        ) {
+          return send(message, `You need to Join \`My\` Voice Channel`);
+        } else {
+          let song = message.cleanContent;
+          await message.delete().catch((e) => {});
+          player
+            .play(voiceChannel, song, {
+              member: message.member,
+              message: message,
+              textChannel: message.channel,
+            })
+            .catch((e) => {
+              console.log(e);
+            });
+        }
+      }
+    }
+  });
 };
+
+/**
+ *
+ * @param {ButtonInteraction} interaction
+ * @param {String} string
+ */
+async function send(interaction, string) {
+  interaction
+    .followUp({
+      embeds: [
+        new MessageEmbed()
+          .setColor(ee.color)
+          .setTitle(string)
+          .setFooter({ text: ee.footertext, iconURL: ee.footericon }),
+      ],
+    })
+    .then((m) => {
+      setTimeout(() => {
+        m.delete().catch((e) => {});
+      }, 4000);
+    });
+}
